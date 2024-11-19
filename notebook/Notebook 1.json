@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "59e0f841-f3f5-4d45-bb6e-25b36f85ee01"
+				"spark.autotune.trackingId": "89536337-b642-4d10-abf1-a2e6a4c37025"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"from pyspark.sql.functions import col, when\n",
 					"from delta.tables import *"
 				],
-				"execution_count": 11
+				"execution_count": 29
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +80,7 @@
 					"display(parquet_df)\n",
 					""
 				],
-				"execution_count": 6
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -102,7 +102,7 @@
 					"    .format(\"delta\") \\\n",
 					"    .save(delta_path)"
 				],
-				"execution_count": 8
+				"execution_count": null
 			},
 			{
 				"cell_type": "code",
@@ -132,7 +132,28 @@
 					"delta_table.alias('old').merge(new_houses.alias('new'), 'old.price = new.price').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()\n",
 					""
 				],
-				"execution_count": 25
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"initial_version = spark.read \\\n",
+					"    .format('delta') \\\n",
+					"    .option('versionAsOf', 0) \\\n",
+					"    .load(delta_path)"
+				],
+				"execution_count": 28
 			},
 			{
 				"cell_type": "code",
@@ -152,7 +173,7 @@
 					"df = spark.read.format(\"delta\").load(delta_path)\n",
 					"display(df)"
 				],
-				"execution_count": 19
+				"execution_count": 26
 			}
 		]
 	}
