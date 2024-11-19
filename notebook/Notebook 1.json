@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "89536337-b642-4d10-abf1-a2e6a4c37025"
+				"spark.autotune.trackingId": "9a59fa2c-06c7-4fed-8f23-ea774aabd6e5"
 			}
 		},
 		"metadata": {
@@ -66,7 +66,7 @@
 					"from pyspark.sql.functions import col, when\n",
 					"from delta.tables import *"
 				],
-				"execution_count": 29
+				"execution_count": 34
 			},
 			{
 				"cell_type": "code",
@@ -80,7 +80,7 @@
 					"display(parquet_df)\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 35
 			},
 			{
 				"cell_type": "code",
@@ -100,9 +100,10 @@
 					"delta_path = \"abfss://raw@deltawsstorage.dfs.core.windows.net/victor_house_prices/house_price_delta\"\n",
 					"parquet_df.write \\\n",
 					"    .format(\"delta\") \\\n",
+					"    .mode(\"overwrite\") \\\n",
 					"    .save(delta_path)"
 				],
-				"execution_count": null
+				"execution_count": 41
 			},
 			{
 				"cell_type": "code",
@@ -122,7 +123,6 @@
 					"# Open Delta Table\n",
 					"delta_table = DeltaTable.forPath(spark, delta_path)\n",
 					"\n",
-					"\n",
 					"new_houses = spark.createDataFrame([\n",
 					"    (12342342, 7420, 4, 5, 5, 'no', 'no', 'no', 'no', 'no', 3, 'no', 'semi-furnished'),\n",
 					"    (239403, 7420, 4, 5, 5, 'yes', 'no', 'no', 'no', 'no', 3, 'no', 'semi-furnished')\n",
@@ -132,7 +132,7 @@
 					"delta_table.alias('old').merge(new_houses.alias('new'), 'old.price = new.price').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()\n",
 					""
 				],
-				"execution_count": null
+				"execution_count": 46
 			},
 			{
 				"cell_type": "code",
@@ -148,12 +148,75 @@
 					}
 				},
 				"source": [
+					"## Time Travel\n",
+					"\n",
+					"# Method 1: Version-based Time Travel\n",
+					"# Read the initial version of the table\n",
+					"\n",
 					"initial_version = spark.read \\\n",
 					"    .format('delta') \\\n",
 					"    .option('versionAsOf', 0) \\\n",
-					"    .load(delta_path)"
+					"    .load(delta_path)\n",
+					"\n",
+					"# Method 2: Timestamp-based Time Travel    \n",
+					"initial_timestamp = spark.read \\\n",
+					"    .format(\"delta\") \\\n",
+					"    .option(\"timestampAsOf\", \"2024-11-19 17:00:00\") \\\n",
+					"    .load(delta_path)\n",
+					"\n",
+					"# View Table History\n",
+					"from delta.tables import DeltaTable\n",
+					"\n",
+					"delta_table = DeltaTable.forPath(spark, delta_path)\n",
+					"delta_table.history().show()"
 				],
-				"execution_count": 28
+				"execution_count": 50
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# Part 3: Delta Lake Optimization\n",
+					"\n",
+					"#Optimize Table\n",
+					"delta_table.optimize().executeCompaction()\n",
+					"\n",
+					"# Vacuum Old Versions\n",
+					"delta_table.vacuum(168)  # Keep last 7 days\n",
+					"\n",
+					"# Performance Analysis\n",
+					"spark.sql(f\"DESCRIBE DETAIL delta.`{delta_path}`\").show(truncate=False)"
+				],
+				"execution_count": 52
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": false
+				},
+				"source": [
+					"display(initial_version)"
+				],
+				"execution_count": 44
 			},
 			{
 				"cell_type": "code",
@@ -173,7 +236,7 @@
 					"df = spark.read.format(\"delta\").load(delta_path)\n",
 					"display(df)"
 				],
-				"execution_count": 26
+				"execution_count": 39
 			}
 		]
 	}
