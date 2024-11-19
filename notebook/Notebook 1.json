@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "1b000168-12d0-40f5-89d5-31d96a085638"
+				"spark.autotune.trackingId": "59e0f841-f3f5-4d45-bb6e-25b36f85ee01"
 			}
 		},
 		"metadata": {
@@ -48,6 +48,26 @@
 			"sessionKeepAliveTimeout": 30
 		},
 		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# PySpark Delta Lake Configuration\n",
+					"from pyspark.sql.functions import col, when\n",
+					"from delta.tables import *"
+				],
+				"execution_count": 11
+			},
 			{
 				"cell_type": "code",
 				"metadata": {
@@ -95,12 +115,24 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					"#Add new customers"
+					"# Open Delta Table\n",
+					"delta_table = DeltaTable.forPath(spark, delta_path)\n",
+					"\n",
+					"\n",
+					"new_houses = spark.createDataFrame([\n",
+					"    (12342342, 7420, 4, 5, 5, 'no', 'no', 'no', 'no', 'no', 3, 'no', 'semi-furnished'),\n",
+					"    (239403, 7420, 4, 5, 5, 'yes', 'no', 'no', 'no', 'no', 3, 'no', 'semi-furnished')\n",
+					"    ], ['price', 'area', 'bedrooms', 'bathrooms', 'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'parking', 'prefarea', 'furnishingstatus'\n",
+					"])\n",
+					"\n",
+					"delta_table.alias('old').merge(new_houses.alias('new'), 'old.price = new.price').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()\n",
+					""
 				],
-				"execution_count": 9
+				"execution_count": 25
 			},
 			{
 				"cell_type": "code",
@@ -113,12 +145,14 @@
 						"transient": {
 							"deleting": false
 						}
-					}
+					},
+					"collapsed": false
 				},
 				"source": [
-					""
+					"df = spark.read.format(\"delta\").load(delta_path)\n",
+					"display(df)"
 				],
-				"execution_count": null
+				"execution_count": 19
 			}
 		]
 	}
