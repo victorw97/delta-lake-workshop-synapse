@@ -1,0 +1,17 @@
+{
+	"name": "SQL script 1",
+	"properties": {
+		"content": {
+			"query": "SELECT TOP 10 *\nFROM OPENROWSET(\n    BULK 'https://deltawsstorage.blob.core.windows.net/raw/victor_house_prices/house_price_delta/',\n    FORMAT = 'delta') as rows;",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
