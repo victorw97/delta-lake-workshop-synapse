@@ -17,7 +17,7 @@
 				"spark.dynamicAllocation.enabled": "false",
 				"spark.dynamicAllocation.minExecutors": "2",
 				"spark.dynamicAllocation.maxExecutors": "2",
-				"spark.autotune.trackingId": "d3359e19-30a3-48d0-bc3d-721d70b80254"
+				"spark.autotune.trackingId": "e8fb3ab0-67e0-4bff-be6f-88ca56ee44da"
 			}
 		},
 		"metadata": {
@@ -75,13 +75,26 @@
 				},
 				"source": [
 					"#read the parquet file into dataframe\n",
-					"parquet_path = \"abfss://raw@deltawsstorage.dfs.core.windows.net/victor_house_prices/house_price_sample.parquet\"\n",
+					"parquet_path = \"abfss://raw@deltawsstorage.dfs.core.windows.net/<>/house_price_sample.parquet\"\n",
 					"parquet_df = spark.read.parquet(parquet_path)\n",
 					"\n",
 					"display(parquet_df)\n",
 					""
 				],
 				"execution_count": 4
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Task 1: Create delta table from .parquet file"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -98,13 +111,24 @@
 				},
 				"source": [
 					"# write to Delta Lake \n",
-					"delta_path = \"abfss://raw@deltawsstorage.dfs.core.windows.net/victor_house_prices/house_price_delta\"\n",
-					"parquet_df.write \\\n",
-					"    .format(\"delta\") \\\n",
-					"    .mode(\"overwrite\") \\\n",
-					"    .save(delta_path)"
+					"delta_path = \"abfss://raw@deltawsstorage.dfs.core.windows.net/<>/house_price_delta\"\n",
+					"\n",
+					"# Todo: create delta table"
 				],
 				"execution_count": 3
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Task 2: Add columns to delta table"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -130,10 +154,23 @@
 					"    ], ['price', 'area', 'bedrooms', 'bathrooms', 'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating', 'airconditioning', 'parking', 'prefarea', 'furnishingstatus'\n",
 					"])\n",
 					"\n",
-					"delta_table.alias('old').merge(new_houses.alias('new'), 'old.price = new.price').whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()\n",
-					""
+					"\n",
+					"# Todo: Add columns to delta table"
 				],
 				"execution_count": 5
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Task 3: Explore the time travel feature"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -152,23 +189,31 @@
 					"## Time Travel\n",
 					"\n",
 					"# Method 1: Version-based Time Travel\n",
-					"# Read the initial version of the table\n",
+					"# Todo: Read the initial version of the table\n",
 					"\n",
-					"initial_version = spark.read \\\n",
-					"    .format('delta') \\\n",
-					"    .option('versionAsOf', 0) \\\n",
-					"    .load(delta_path)\n",
+					"\n",
 					"\n",
 					"# Method 2: Timestamp-based Time Travel    \n",
-					"initial_timestamp = spark.read \\\n",
-					"    .format(\"delta\") \\\n",
-					"    .option(\"timestampAsOf\", \"2024-11-19 17:00:00\") \\\n",
-					"    .load(delta_path)\n",
+					"# Todo: Read the version five minutes ago\n",
+					"\n",
 					"\n",
 					"delta_table = DeltaTable.forPath(spark, delta_path)\n",
 					"delta_table.history().show()"
 				],
 				"execution_count": 6
+			},
+			{
+				"cell_type": "markdown",
+				"metadata": {
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"### Task 4: Clean up the table"
+				]
 			},
 			{
 				"cell_type": "code",
@@ -184,16 +229,14 @@
 					}
 				},
 				"source": [
-					"# Part 3: Delta Lake Optimization\n",
 					"\n",
-					"#Optimize Table\n",
+					"\n",
+					"#Optimize compaction Table\n",
 					"delta_table.optimize().executeCompaction()\n",
 					"\n",
-					"# Vacuum Old Versions\n",
+					"# Vacuum table\n",
 					"delta_table.vacuum(168)  # Keep last 7 days\n",
-					"\n",
-					"# Performance Analysis\n",
-					"spark.sql(f\"DESCRIBE DETAIL delta.`{delta_path}`\").show(truncate=False)"
+					""
 				],
 				"execution_count": 7
 			},
